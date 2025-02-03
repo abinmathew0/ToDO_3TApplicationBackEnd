@@ -16,7 +16,7 @@ const PORT = 3000;
 // Azure SQL configuration (insert your actual credentials)
 const config = {
   user: "abin", // e.g., "myAzureUser"
-  password: "#3TAServer", // e.g., "myAzurePassword"
+  password: "3TAServer", // e.g., "myAzurePassword"
   server: "ttappserver.database.windows.net", // e.g., "myserver.database.windows.net"
   database: "3TADatabase", // e.g., "myDatabase"
   port: 1433, // Default port for SQL Server
