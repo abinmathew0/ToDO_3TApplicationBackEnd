@@ -45,6 +45,14 @@ async function getPool() {
   return pool;
 }
 
+
+app.get("/", (req, res) => {
+  res.send(
+    "Hello, World! This is your Task Management App backend connected to Azure SQL."
+  );
+});
+
+
 /**
  * GET /tasks
  * Retrieves all tasks from the Tasks table.
