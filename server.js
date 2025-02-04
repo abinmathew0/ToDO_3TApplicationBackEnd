@@ -151,7 +151,7 @@ app.delete("/tasks/:id", async (req, res) => {
  */
 app.get("/", (req, res) => {
   res.send(
-    "Hello, World! This is your Task Management App backend connected to Azure SQL."
+    "Hello, This is your Task Management App backend connected to Azure SQL."
   );
 });
 
