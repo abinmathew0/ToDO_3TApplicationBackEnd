@@ -8,7 +8,8 @@ const app = express();
 app.use(express.json());
 
 // Enable CORS (allowing all origins for demo purposes)
-app.use(cors());
+
+app.use(cors({ origin: "*" }));
 
 // Set up the server port
 const PORT = 3000;
