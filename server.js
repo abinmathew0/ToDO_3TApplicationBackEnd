@@ -1,63 +1,47 @@
 const express = require("express");
 const sql = require("mssql");
 const cors = require("cors");
+require("dotenv").config(); // Load environment variables
 
 const app = express();
 
 // Middleware to parse JSON bodies
 app.use(express.json());
+app.use(cors({ origin: "*" })); // Enable CORS
 
-// Enable CORS (allowing all origins for demo purposes)
+// Use process.env.PORT for Azure App Service
+const PORT = process.env.PORT || 3000;
 
-app.use(cors({ origin: "*" }));
-
-// Set up the server port
-const PORT = 3000;
-
-// Azure SQL configuration (insert your actual credentials)
+// Azure SQL configuration using environment variables
 const config = {
-  user: "abin", // e.g., "myAzureUser"
-  password: "3TAServer", // e.g., "myAzurePassword"
-  server: "ttappserver.database.windows.net", // e.g., "myserver.database.windows.net"
-  database: "3TADatabase", // e.g., "myDatabase"
-  port: 1433, // Default port for SQL Server
+  user: process.env.DB_USER, // Set in Azure App Service
+  password: process.env.DB_PASSWORD, // Set in Azure App Service
+  server: process.env.DB_SERVER, // Set in Azure App Service
+  database: process.env.DB_NAME, // Set in Azure App Service
+  port: 1433,
   options: {
-    encrypt: true, // Required for Azure SQL
+    encrypt: true,
     enableArithAbort: true,
   },
 };
 
-// Create a global connection pool variable to reuse connections
-let pool;
-
-/**
- * Returns (or creates) a connection pool.
- */
+// Function to create a new SQL connection for each request
 async function getPool() {
-  if (!pool) {
-    try {
-      pool = await sql.connect(config);
-      console.log("Connected to Azure SQL Database");
-    } catch (err) {
-      console.error("Error connecting to Azure SQL Database:", err);
-      throw err;
-    }
+  try {
+    const pool = await sql.connect(config);
+    return pool;
+  } catch (err) {
+    console.error("Error connecting to Azure SQL:", err);
+    throw err;
   }
-  return pool;
 }
 
-
+// Home route
 app.get("/", (req, res) => {
-  res.send(
-    "Hello, World! This is your Task Management App backend connected to Azure SQL."
-  );
+  res.send("Task Management App Backend is Running ✅");
 });
 
-
-/**
- * GET /tasks
- * Retrieves all tasks from the Tasks table.
- */
+// Fetch all tasks
 app.get("/tasks", async (req, res) => {
   try {
     const pool = await getPool();
@@ -69,11 +53,7 @@ app.get("/tasks", async (req, res) => {
   }
 });
 
-/**
- * POST /tasks
- * Inserts a new task into the Tasks table.
- * Expected body: { text: "Task description" }
- */
+// Insert a new task
 app.post("/tasks", async (req, res) => {
   try {
     const { text } = req.body;
@@ -94,11 +74,7 @@ app.post("/tasks", async (req, res) => {
   }
 });
 
-/**
- * PUT /tasks/:id
- * Updates an existing task.
- * Expected body: { text: "Updated text", completed: true/false }
- */
+// Update a task
 app.put("/tasks/:id", async (req, res) => {
   try {
     const { id } = req.params;
@@ -110,10 +86,7 @@ app.put("/tasks/:id", async (req, res) => {
       .input("text", sql.NVarChar, text)
       .input("completed", sql.Bit, completed)
       .query(
-        `UPDATE Tasks 
-         SET text = @text, completed = @completed 
-         OUTPUT INSERTED.* 
-         WHERE id = @id`
+        "UPDATE Tasks SET text = @text, completed = @completed OUTPUT INSERTED.* WHERE id = @id"
       );
     if (result.recordset.length === 0) {
       return res.status(404).json({ error: "Task not found" });
@@ -125,10 +98,7 @@ app.put("/tasks/:id", async (req, res) => {
   }
 });
 
-/**
- * DELETE /tasks/:id
- * Deletes a task by its id.
- */
+// Delete a task
 app.delete("/tasks/:id", async (req, res) => {
   try {
     const { id } = req.params;
@@ -147,21 +117,7 @@ app.delete("/tasks/:id", async (req, res) => {
   }
 });
 
-/**
- * Home route
- */
-app.get("/", (req, res) => {
-  res.send(
-    "Hello, This is your Task Management App backend connected to Azure SQL."
-  );
-});
-
-// Global error handler for SQL errors
-sql.on("error", (err) => {
-  console.error("SQL global error:", err);
-});
-
-// Start the server
-app.listen(PORT, () => {
-  console.log(`Server is running on http://localhost:${PORT}`);
+// Start the server and use 0.0.0.0 for Azure compatibility
+app.listen(PORT, "0.0.0.0", () => {
+  console.log(`Server running on http://0.0.0.0:${PORT}`);
 });
